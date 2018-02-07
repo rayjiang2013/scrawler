@@ -37,17 +37,18 @@ def send_email(sender, to, subject, message):
 while True:
     if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > '2018-02-07 06:30:00':
         for stock in stock_list:
-            stock_resp_min = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=1min&apikey=9PXXWXMCD4EE6Z52" % stock)
-            stock_data_min = json.loads(stock_resp_min.content)["Time Series (1min)"]
-            all_volume = [int(v['5. volume']) for v in sorted(stock_data_min.itervalues(), reverse=True)]
-            outliers = get_outliers(all_volume)
-            latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[0]]
-            if int(latest_data['5. volume']) in outliers:
-            #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
-            #if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
-                send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
-                print "Sending email from l_jiang@apple.com to iamabigstone@gmail.com with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
-                time.sleep(1)
-            #print latest_data, second_latest_data
+            try:
+                stock_resp_min = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=1min&apikey=9PXXWXMCD4EE6Z52" % stock)
+                stock_data_min = json.loads(stock_resp_min.content)["Time Series (1min)"]
+                all_volume = [int(v['5. volume']) for v in sorted(stock_data_min.itervalues(), reverse=True)]
+                outliers = get_outliers(all_volume)
+                latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[0]]
+                if int(latest_data['5. volume']) in outliers:
+                #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
+                #if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
+                    send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
+                    print "Sending email from l_jiang@apple.com to iamabigstone@gmail.com with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                #print latest_data, second_latest_data
+            except Exception:
+                pass
         time.sleep(60)
- 
