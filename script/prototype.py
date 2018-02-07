@@ -9,7 +9,7 @@ from datetime import datetime
 def get_outliers(data, m=1):
     u = np.mean(data)
     s = np.std(data)
-    filtered = [e for e in data if not (u - m * s < e < u + m * s)]
+    filtered = [e for e in data if e > u + m * s]
     return filtered
 
 api_key = "9PXXWXMCD4EE6Z52"
