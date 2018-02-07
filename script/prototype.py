@@ -37,6 +37,7 @@ def send_email(sender, to, subject, message):
 while True:
     if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > '2018-02-07 06:30:00':
         for stock in stock_list:
+            time.sleep(1)
             try:
                 stock_resp_min = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=1min&apikey=9PXXWXMCD4EE6Z52" % stock)
                 stock_data_min = json.loads(stock_resp_min.content)["Time Series (1min)"]
