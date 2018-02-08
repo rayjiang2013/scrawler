@@ -80,7 +80,8 @@ while True:
                     send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
                     print "Sending email from l_jiang@apple.com to iamabigstone@gmail.com with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                 #print latest_data, second_latest_data
-            except Exception:
+            except Exception, e:
+                print e
                 print "Exception at https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=1min&apikey=9PXXWXMCD4EE6Z52 at %s" % (stock, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         time.sleep(60)
     if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
