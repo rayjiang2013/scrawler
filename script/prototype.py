@@ -34,6 +34,11 @@ def getOptions():
                         dest='start_time',
                         default=argparse.SUPPRESS)    
     options = parser.parse_args()
+    parser.add_argument("-e",
+                        "--end_time",
+                        dest='end_time',
+                        default=argparse.SUPPRESS)    
+    options = parser.parse_args()
     return options
 api_key = "9PXXWXMCD4EE6Z52"
 SMTP_SERVER = 'relay.apple.com'
@@ -58,6 +63,7 @@ def send_email(sender, to, subject, message):
 options = getOptions()
 stock_list = options.stock_list
 start_time = options.start_time # for example, 2018-02-07 06:30:00
+end_time = options.end_time
 
 while True:
     if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
@@ -78,3 +84,5 @@ while True:
             except Exception:
                 print "Exception at https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=1min&apikey=9PXXWXMCD4EE6Z52" % stock
         time.sleep(60)
+    if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
+        break
