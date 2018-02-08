@@ -1,3 +1,4 @@
+import argparse
 import json
 import requests
 import time
@@ -6,18 +7,38 @@ from email.mime.text import MIMEText
 import numpy as np
 from datetime import datetime
 
+stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT", "JPM", "NTES", "PG", "SCHW", "SOGO", "TRVG", "WB"]
+
 def get_outliers(data, m=1):
     u = np.mean(data)
     s = np.std(data)
     filtered = [e for e in data if e > u + m * s]
     return filtered
 
+
+
+# Get options from cli
+def getOptions():
+    '''
+    @summary: To get options from cli
+    @return: return namespace of parsed options
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-l",
+                        "--stock_list",
+                        dest='stock_list',
+                        default=stock_list,
+                        nargs='+')
+    parser.add_argument("-s",
+                        "--start_time",
+                        dest='start_time',
+                        default=argparse.SUPPRESS)    
+    options = parser.parse_args()
+    return options
 api_key = "9PXXWXMCD4EE6Z52"
 SMTP_SERVER = 'relay.apple.com'
 
 i = 0
-
-stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT", "JPM", "NTES", "PG", "SCHW", "SOGO", "TRVG", "WB"]
 
 def send_email(sender, to, subject, message):
     # Assemble the email
@@ -34,8 +55,12 @@ def send_email(sender, to, subject, message):
     smtp.sendmail(sender, to, msg.as_string())
     smtp.quit()
 
+options = getOptions()
+stock_list = options.stock_list
+start_time = options.start_time # for example, 2018-02-07 06:30:00
+
 while True:
-    if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > '2018-02-07 06:30:00':
+    if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
         for stock in stock_list:
             time.sleep(1)
             try:
