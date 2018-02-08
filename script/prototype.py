@@ -33,7 +33,6 @@ def getOptions():
                         "--start_time",
                         dest='start_time',
                         default=argparse.SUPPRESS)    
-    options = parser.parse_args()
     parser.add_argument("-e",
                         "--end_time",
                         dest='end_time',
