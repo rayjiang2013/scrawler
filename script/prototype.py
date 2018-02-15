@@ -77,8 +77,13 @@ while True:
                 if int(latest_data['5. volume']) in outliers:
                 #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
                 #if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
-                    send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
-                    print "Sending email from l_jiang@apple.com to iamabigstone@gmail.com with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                    #send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
+                    #print "Sending email from l_jiang@apple.com to iamabigstone@gmail.com with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                    requests.post('http://perfreporting.apple.com:5000/text', {
+                      'number': '3522223838',
+                      'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                    })
+                    print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                 #print latest_data, second_latest_data
             except Exception, e:
                 print e
