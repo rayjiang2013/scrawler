@@ -9,7 +9,7 @@ from datetime import datetime
 
 stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT", "JPM", "NTES", "PG", "SCHW", "SOGO", "TRVG", "WB"]
 
-def get_outliers(data, m=1):
+def get_outliers(data, m=2):
     u = np.mean(data)
     s = np.std(data)
     filtered = [e for e in data if e > u + m * s]
