@@ -15,7 +15,17 @@ def get_outliers(data, m=2):
     filtered = [e for e in data if e > u + m * s]
     return filtered
 
-
+def get_outliers_iqr(x, outlier_constant=1.5):
+    a = np.array(x)
+    upper_quartile = np.percentile(a, 75)
+    lower_quartile = np.percentile(a, 25)
+    iqr = upper_quartile - lower_quartile
+    quartile_set = (lower_quartile - iqr * 1.5, upper_quartile + iqr * 1.5)
+    result_list = []
+    for y in a.tolist():
+        if y > quartile_set[1]:
+            result_list.append(y)
+    return result_list
 
 # Get options from cli
 def getOptions():
@@ -72,7 +82,8 @@ while True:
                 stock_resp_min = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=1min&apikey=9PXXWXMCD4EE6Z52" % stock)
                 stock_data_min = json.loads(stock_resp_min.content)["Time Series (1min)"]
                 all_volume = [int(v['5. volume']) for v in sorted(stock_data_min.itervalues(), reverse=True)]
-                outliers = get_outliers(all_volume)
+                #outliers = get_outliers(all_volume)
+                outliers = get_outliers_iqr(all_volume)
                 latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[0]]
                 if int(latest_data['5. volume']) in outliers:
                 #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
