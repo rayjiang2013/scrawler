@@ -7,7 +7,8 @@ from email.mime.text import MIMEText
 import numpy as np
 from datetime import datetime
 
-stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT", "JPM", "NTES", "PG", "SCHW", "SOGO", "TRVG", "WB"]
+stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT",
+              "JPM", "NTES", "PG", "SCHW", "SOGO", "TRVG", "WB"]
 alphavantage_api = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&interval=1min&apikey=%s&symbol=%s"
 iextrading_quote_api = "https://api.iextrading.com/1.0/stock/%s/quote"
 iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/1d"
@@ -20,6 +21,7 @@ def get_outliers(data, m=2):
     s = np.std(data)
     filtered = [e for e in data if e > u + m * s]
     return filtered
+
 
 def get_outliers_iqr(x, outlier_constant=1.5):
     a = np.array(x)
@@ -34,6 +36,8 @@ def get_outliers_iqr(x, outlier_constant=1.5):
     return result_list
 
 # Get options from cli
+
+
 def getOptions():
     '''
     @summary: To get options from cli
@@ -48,17 +52,18 @@ def getOptions():
     parser.add_argument("-s",
                         "--start_time",
                         dest='start_time',
-                        default=argparse.SUPPRESS)    
+                        default=argparse.SUPPRESS)
     parser.add_argument("-e",
                         "--end_time",
                         dest='end_time',
-                        default=argparse.SUPPRESS)    
+                        default=argparse.SUPPRESS)
     parser.add_argument("-a",
                         "--api",
                         dest='api',
-                        default="iextrading_api")  
+                        default="iextrading_api")
     options = parser.parse_args()
     return options
+
 
 def send_email(sender, to, subject, message):
     # Assemble the email
@@ -75,33 +80,44 @@ def send_email(sender, to, subject, message):
     smtp.sendmail(sender, to, msg.as_string())
     smtp.quit()
 
+
 def alphavantage_main(options):
     stock_list = options.stock_list
-    start_time = options.start_time # for example, 2018-02-07 06:30:00
+    start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
-    
+    #start_time = "2018-11-20 06:40:00"
     while True:
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
             for stock in stock_list:
-                time.sleep(1) # 1 sec seems to be enough to get consistent response from this api
+                # 1 sec seems to be enough to get consistent response from this
+                # api
+                time.sleep(1)
                 try:
-                    stock_resp_min = requests.get(alphavantage_api % (api_key, stock))
-                    stock_data_min = json.loads(stock_resp_min.content)["Time Series (1min)"]
-                    all_volume = [int(v['5. volume']) for v in sorted(stock_data_min.itervalues(), reverse=True)]
+                    stock_resp_min = requests.get(
+                        alphavantage_api % (api_key, stock))
+                    stock_data_min = json.loads(stock_resp_min.content)[
+                        "Time Series (1min)"]
+                    all_volume = [int(v['5. volume']) for v in sorted(
+                        stock_data_min.itervalues(), reverse=True)]
                     #outliers = get_outliers(all_volume)
                     outliers = get_outliers_iqr(all_volume)
-                    latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[0]]
+                    latest_data = stock_data_min[sorted(
+                        stock_data_min.iterkeys(), reverse=True)[0]]
                     if int(latest_data['5. volume']) in outliers:
-                    #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
-                    #if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
+                        #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
+                        # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
                         #send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
-                        #print "Sending email from l_jiang@apple.com to iamabigstone@gmail.com with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        # print "Sending email from l_jiang@apple.com to
+                        # iamabigstone@gmail.com with high volumn notification
+                        # for " + stock + "Current volume is: %s; time is: %s"
+                        # % (int(latest_data['5. volume']),
+                        # sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         requests.post('http://perfreporting.apple.com:9090/text', {
-                          'number': '3522223838',
-                          'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            'number': '3522223838',
+                            'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         })
                         print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
-                    #print latest_data, second_latest_data
+                    # print latest_data, second_latest_data
                 except Exception, e:
                     print e
                     print "Exception at " + alphavantage_api % (api_key, stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -109,11 +125,12 @@ def alphavantage_main(options):
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
             break
 
+
 def iextrading_main(options):
     stock_list = options.stock_list
-    start_time = options.start_time # for example, 2018-02-07 06:30:00
+    start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
-    
+    #start_time = "2018-11-20 06:40:00"
     while True:
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
             for stock in stock_list:
@@ -121,27 +138,38 @@ def iextrading_main(options):
                 try:
                     stock_resp_min = requests.get(iextrading_api % (stock))
                     stock_data_min = json.loads(stock_resp_min.content)
-                    all_volume = [int(v['marketVolume']) for v in sorted(stock_data_min, key=lambda s: s['marketVolume'], reverse=True)]
+                    all_volume = [int(v['marketVolume'])
+                                  for v in stock_data_min]
+                    if len(all_volume) <= 100:
+                        volume_to_check = all_volume
+                    else:
+                        volume_to_check = all_volume[-100:]
                     #outliers = get_outliers(all_volume)
-                    outliers = get_outliers_iqr(all_volume)
-                    latest_data = sorted(stock_data_min, key=lambda s: s['minute'], reverse=True)[0]
+                    outliers = get_outliers_iqr(volume_to_check)
+                    latest_data = sorted(
+                        stock_data_min, key=lambda s: s['minute'], reverse=True)[0]
                     if int(latest_data['marketVolume']) in outliers:
-                    #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
-                    #if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
+                        #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
+                        # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
                         #send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
-                        #print "Sending email from l_jiang@apple.com to iamabigstone@gmail.com with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        # print "Sending email from l_jiang@apple.com to
+                        # iamabigstone@gmail.com with high volumn notification
+                        # for " + stock + "Current volume is: %s; time is: %s"
+                        # % (int(latest_data['5. volume']),
+                        # sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         requests.post('http://perfreporting.apple.com:9090/text', {
-                          'number': '3522223838',
-                          'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['marketVolume']), latest_data['minute'])
+                            'number': '3522223838',
+                            'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['marketVolume']), latest_data['minute'])
                         })
                         print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['marketVolume']), latest_data['minute'])
-                    #print latest_data, second_latest_data
+                    # print latest_data, second_latest_data
                 except Exception, e:
                     print e
                     print "Exception at " + iextrading_api % (stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             time.sleep(60)
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
             break
+
 
 if __name__ == '__main__':
     options = getOptions()
@@ -152,4 +180,3 @@ if __name__ == '__main__':
         iextrading_main(options)
     else:
         print "unrecognized api!! please check your -a option"
-    
