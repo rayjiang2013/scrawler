@@ -12,6 +12,7 @@ stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT",
 alphavantage_api = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&interval=1min&apikey=%s&symbol=%s"
 iextrading_quote_api = "https://api.iextrading.com/1.0/stock/%s/quote"
 iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/1d"
+#iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/date/20181123"
 api_key = "9PXXWXMCD4EE6Z52"
 SMTP_SERVER = 'relay.apple.com'
 
@@ -121,7 +122,7 @@ def alphavantage_main(options):
                 except Exception, e:
                     print e
                     print "Exception at " + alphavantage_api % (api_key, stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            time.sleep(60)
+            time.sleep(59)
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
             break
 
@@ -140,14 +141,18 @@ def iextrading_main(options):
                     stock_data_min = json.loads(stock_resp_min.content)
                     all_volume = [int(v['marketVolume'])
                                   for v in stock_data_min]
+                    # volume_exclude_zero = [v for v in all_volume[] if v!= 0]
                     if len(all_volume) <= 100:
                         volume_to_check = all_volume
                     else:
                         volume_to_check = all_volume[-100:]
                     #outliers = get_outliers(all_volume)
                     outliers = get_outliers_iqr(volume_to_check)
+                    print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    print "outliers: %s" % outliers
                     latest_data = sorted(
                         stock_data_min, key=lambda s: s['minute'], reverse=True)[0]
+                    print "latest_data: %s" % latest_data
                     if int(latest_data['marketVolume']) in outliers:
                         #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
                         # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
@@ -166,7 +171,7 @@ def iextrading_main(options):
                 except Exception, e:
                     print e
                     print "Exception at " + iextrading_api % (stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            time.sleep(60)
+            time.sleep(59)
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
             break
 
