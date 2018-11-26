@@ -82,6 +82,16 @@ def send_email(sender, to, subject, message):
     smtp.quit()
 
 
+def is_low_price(price, history_prices):
+    if price < min(history_prices) * 1.001:
+        return True
+
+
+def is_high_price(price, history_prices):
+    if price < max(history_prices) and price > max(history_prices) * 0.997:
+        return True
+
+
 def alphavantage_main(options):
     stock_list = options.stock_list
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
@@ -99,6 +109,8 @@ def alphavantage_main(options):
                     stock_data_min = json.loads(stock_resp_min.content)[
                         "Time Series (1min)"]
                     all_volume = [int(v['5. volume']) for v in sorted(
+                        stock_data_min.itervalues(), reverse=True)]
+                    all_values = [float(v['4. close']) for v in sorted(
                         stock_data_min.itervalues(), reverse=True)]
                     #outliers = get_outliers(all_volume)
                     outliers = get_outliers_iqr(all_volume)
@@ -118,6 +130,19 @@ def alphavantage_main(options):
                             'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         })
                         print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        if is_low_price(float(latest_data["4. close"]), all_values):
+                            requests.post('http://perfreporting.apple.com:9090/text', {
+                                'number': '3522223838',
+                                'message': "Low price notification for %s. Current price is: %s; time is: %s" % (stock, int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            })
+                            print "Sending message to 3522223838 with low price notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        elif is_high_price(float(latest_data["4. close"]), all_values):
+                            requests.post('http://perfreporting.apple.com:9090/text', {
+                                'number': '3522223838',
+                                'message': "High price notification for %s. Current price is: %s; time is: %s" % (stock, int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            })
+                            print "Sending message to 3522223838 with high price notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+
                     # print latest_data, second_latest_data
                 except Exception, e:
                     print e
@@ -196,7 +221,8 @@ def iextrading_quote_main(options):
                                        ) if stock_data_min.get('latestVolume') is not None else 0
                     total_volumes[stock].append(total_volume)
                     if len(total_volumes[stock]) > 1:
-                        volume = total_volumes[stock][-1] - total_volumes[stock][-2]
+                        volume = total_volumes[stock][-1] - \
+                            total_volumes[stock][-2]
                     else:
                         volume = 0
                     volumes[stock].append(volume)
@@ -228,10 +254,10 @@ def iextrading_quote_main(options):
                                 " time is: %s" % (stock, volumes[stock][-1],
                                                   datetime.
                                                   utcfromtimestamp(
-                                                    stock_data_min["latestUpdate"]/1000).
-                                                  strftime('%Y-%m-%d %H:%M:%S'))
+                                    stock_data_min["latestUpdate"] / 1000).
+                                    strftime('%Y-%m-%d %H:%M:%S'))
                             })
-                            print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(volumes[stock][-1]),  datetime.utcfromtimestamp(stock_data_min["latestUpdate"]/1000).strftime('%Y-%m-%d %H:%M:%S'))
+                            print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(volumes[stock][-1]),  datetime.utcfromtimestamp(stock_data_min["latestUpdate"] / 1000).strftime('%Y-%m-%d %H:%M:%S'))
                         # print latest_data, second_latest_data
                 except Exception, e:
                     print e
