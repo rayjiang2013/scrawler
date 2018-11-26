@@ -206,11 +206,11 @@ def iextrading_quote_main(options):
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
     #start_time = "2018-11-20 06:40:00"
+    from collections import defaultdict
+    total_volumes = defaultdict(list)
+    volumes = defaultdict(list)
     while True:
         if datetime.now().strftime('%H:%M:%S') > '05:00:00':
-            from collections import defaultdict
-            total_volumes = defaultdict(list)
-            volumes = defaultdict(list)
             for stock in stock_list:
                 time.sleep(1)
                 try:
@@ -238,6 +238,8 @@ def iextrading_quote_main(options):
                         print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         print "outliers: %s" % outliers
                         print "latest_data: %s" % stock_data_min
+                        print "volumes: %s" % volumes
+                        print "total_volumes: %s" % total_volumes
                         if volumes[stock][-1] in outliers:
                             #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
                             # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
