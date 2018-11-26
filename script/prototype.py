@@ -133,15 +133,15 @@ def alphavantage_main(options):
                         if is_low_price(float(latest_data["4. close"]), all_values):
                             requests.post('http://perfreporting.apple.com:9090/text', {
                                 'number': '3522223838',
-                                'message': "Low price notification for %s. Current price is: %s; time is: %s" % (stock, int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                                'message': "Low price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             })
-                            print "Sending message to 3522223838 with low price notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            print "Sending message to 3522223838 with low price notification for " + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         elif is_high_price(float(latest_data["4. close"]), all_values):
                             requests.post('http://perfreporting.apple.com:9090/text', {
                                 'number': '3522223838',
-                                'message': "High price notification for %s. Current price is: %s; time is: %s" % (stock, int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                                'message': "High price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             })
-                            print "Sending message to 3522223838 with high price notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            print "Sending message to 3522223838 with high price notification for " + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
 
                     # print latest_data, second_latest_data
                 except Exception, e:
