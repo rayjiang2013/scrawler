@@ -83,7 +83,7 @@ def send_email(sender, to, subject, message):
 
 
 def is_low_price(price, history_prices):
-    if price < min(history_prices) * 1.001:
+    if price < min(history_prices) * 1.003:
         return True
 
 
@@ -209,6 +209,7 @@ def iextrading_quote_main(options):
     from collections import defaultdict
     total_volumes = defaultdict(list)
     volumes = defaultdict(list)
+    prices = defaultdict(list)
     while True:
         if datetime.now().strftime('%H:%M:%S') > '05:00:00':
             for stock in stock_list:
@@ -226,6 +227,8 @@ def iextrading_quote_main(options):
                     else:
                         volume = 0
                     volumes[stock].append(volume)
+                    price = stock_data_min['extendedPrice']
+                    prices[stock].append(price)
                     if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
                         # volume_exclude_zero = [v for v in all_volume[] if v!=
                         # 0]
@@ -250,24 +253,37 @@ def iextrading_quote_main(options):
                             # % (int(latest_data['5. volume']),
                             # sorted(stock_data_min.iterkeys(),
                             # reverse=True)[0])
+                            extended_price_time = datetime.fromtimestamp(stock_data_min["extendedPriceTime"] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                            high_volume_message = "High volumn notification for %s. Current volume is: %s"\
+                                "; time is: %s" % (stock, volume, extended_price_time)
                             requests.post('http://perfreporting.apple.com:9090/text', {
                                 'number': '3522223838',
-                                'message': "High volumn notification for %s. Current volume is: %s;"
-                                " time is: %s" % (stock, volumes[stock][-1],
-                                                  datetime.
-                                                  utcfromtimestamp(
-                                    stock_data_min["latestUpdate"] / 1000).
-                                    strftime('%Y-%m-%d %H:%M:%S'))
+                                'message': high_volume_message
                             })
-                            print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(volumes[stock][-1]),  datetime.utcfromtimestamp(stock_data_min["latestUpdate"] / 1000).strftime('%Y-%m-%d %H:%M:%S'))
+                            print high_volume_message
+                            if is_low_price(price, prices[stock]):
+                                low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (stock, price, extended_price_time)
+                                requests.post('http://perfreporting.apple.com:9090/text', {
+                                    'number': '3522223838',
+                                    'message': low_price_message
+                                })
+                                print low_price_message
+                            elif is_high_price(price, prices[stock]):
+                                high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (stock, price, extended_price_time)
+                                requests.post('http://perfreporting.apple.com:9090/text', {
+                                    'number': '3522223838',
+                                    'message': high_price_message
+                                })
+                                print high_price_message
+
                         # print latest_data, second_latest_data
                 except Exception, e:
                     print e
                     print "Exception at " + iextrading_api % (stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             time.sleep(59)
-        elif datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
+        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
             break
-        elif datetime.now().strftime('%H:%M:%S') > '14:00:00':
+        if datetime.now().strftime('%H:%M:%S') > '14:00:00':
             break
 
 
