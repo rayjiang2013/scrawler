@@ -83,12 +83,12 @@ def send_email(sender, to, subject, message):
 
 
 def is_low_price(price, history_prices):
-    if price < min(history_prices) * 1.003:
+    if price < min(history_prices) * 1.001:
         return True
 
 
 def is_high_price(price, history_prices):
-    if price < max(history_prices) and price > max(history_prices) * 0.997:
+    if price > max(history_prices) * 0.999:
         return True
 
 
@@ -243,6 +243,7 @@ def iextrading_quote_main(options):
                         print "latest_data: %s" % stock_data_min
                         print "volumes: %s" % volumes
                         print "total_volumes: %s" % total_volumes
+                        print "prices: %s" % prices
                         if volumes[stock][-1] in outliers:
                             #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
                             # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
@@ -253,23 +254,27 @@ def iextrading_quote_main(options):
                             # % (int(latest_data['5. volume']),
                             # sorted(stock_data_min.iterkeys(),
                             # reverse=True)[0])
-                            extended_price_time = datetime.fromtimestamp(stock_data_min["extendedPriceTime"] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                            extended_price_time = datetime.fromtimestamp(
+                                stock_data_min["extendedPriceTime"] / 1000).strftime('%Y-%m-%d %H:%M:%S')
                             high_volume_message = "High volumn notification for %s. Current volume is: %s"\
-                                "; time is: %s" % (stock, volume, extended_price_time)
+                                "; time is: %s" % (
+                                    stock, volume, extended_price_time)
                             requests.post('http://perfreporting.apple.com:9090/text', {
                                 'number': '3522223838',
                                 'message': high_volume_message
                             })
                             print high_volume_message
                             if is_low_price(price, prices[stock]):
-                                low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (stock, price, extended_price_time)
+                                low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
+                                    stock, price, extended_price_time)
                                 requests.post('http://perfreporting.apple.com:9090/text', {
                                     'number': '3522223838',
                                     'message': low_price_message
                                 })
                                 print low_price_message
                             elif is_high_price(price, prices[stock]):
-                                high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (stock, price, extended_price_time)
+                                high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
+                                    stock, price, extended_price_time)
                                 requests.post('http://perfreporting.apple.com:9090/text', {
                                     'number': '3522223838',
                                     'message': high_price_message
