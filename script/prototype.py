@@ -211,7 +211,7 @@ def iextrading_quote_main(options):
     volumes = defaultdict(list)
     prices = defaultdict(list)
     while True:
-        if datetime.now().strftime('%H:%M:%S') > '05:00:00':
+        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time.split()[0] + ' 05:00:00':
             for stock in stock_list:
                 time.sleep(1)
                 try:
@@ -283,7 +283,7 @@ def iextrading_quote_main(options):
             time.sleep(59)
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
             break
-        if datetime.now().strftime('%H:%M:%S') > '14:00:00':
+        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time.split()[0] + ' 14:00:00':
             break
 
 
