@@ -15,6 +15,7 @@ iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/1d"
 #iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/date/20181123"
 api_key = "9PXXWXMCD4EE6Z52"
 SMTP_SERVER = 'relay.apple.com'
+phone_number = "4086432331"
 
 
 def get_outliers(data, m=2):
@@ -126,22 +127,22 @@ def alphavantage_main(options):
                         # % (int(latest_data['5. volume']),
                         # sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         requests.post('http://perfreporting.apple.com:9090/text', {
-                            'number': '3522223838',
+                            'number': phone_number,
                             'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         })
-                        print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        print "Sending message to %s with high volumn notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         if is_low_price(float(latest_data["4. close"]), all_values):
                             requests.post('http://perfreporting.apple.com:9090/text', {
-                                'number': '3522223838',
+                                'number': phone_number,
                                 'message': "Low price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             })
-                            print "Sending message to 3522223838 with low price notification for " + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            print "Sending message to %s with low price notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         elif is_high_price(float(latest_data["4. close"]), all_values):
                             requests.post('http://perfreporting.apple.com:9090/text', {
-                                'number': '3522223838',
+                                'number': phone_number,
                                 'message': "High price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             })
-                            print "Sending message to 3522223838 with high price notification for " + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            print "Sending message to %s with high price notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
 
                     # print latest_data, second_latest_data
                 except Exception, e:
@@ -188,10 +189,10 @@ def iextrading_main(options):
                         # % (int(latest_data['5. volume']),
                         # sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         requests.post('http://perfreporting.apple.com:9090/text', {
-                            'number': '3522223838',
+                            'number': phone_number,
                             'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['marketVolume']), latest_data['minute'])
                         })
-                        print "Sending message to 3522223838 with high volumn notification for " + stock + "Current volume is: %s; time is: %s" % (int(latest_data['marketVolume']), latest_data['minute'])
+                        print "Sending message to %s with high volumn notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (int(latest_data['marketVolume']), latest_data['minute'])
                     # print latest_data, second_latest_data
                 except Exception, e:
                     print e
@@ -262,7 +263,7 @@ def iextrading_quote_main(options):
                                 "; time is: %s" % (
                                     stock, volume, extended_price_time)
                             requests.post('http://perfreporting.apple.com:9090/text', {
-                                'number': '3522223838',
+                                'number': phone_number,
                                 'message': high_volume_message
                             })
                             print high_volume_message
@@ -270,7 +271,7 @@ def iextrading_quote_main(options):
                                 low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 requests.post('http://perfreporting.apple.com:9090/text', {
-                                    'number': '3522223838',
+                                    'number': phone_number,
                                     'message': low_price_message
                                 })
                                 print low_price_message
@@ -278,7 +279,7 @@ def iextrading_quote_main(options):
                                 high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 requests.post('http://perfreporting.apple.com:9090/text', {
-                                    'number': '3522223838',
+                                    'number': phone_number,
                                     'message': high_price_message
                                 })
                                 print high_price_message
