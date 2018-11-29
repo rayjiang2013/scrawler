@@ -226,7 +226,9 @@ def iextrading_quote_main(options):
                             total_volumes[stock][-2]
                     else:
                         volume = 0
-                    volumes[stock].append(volume)
+                    # only check outlier from non zero volumes
+                    if volume > 0:
+                        volumes[stock].append(volume)
                     price = stock_data_min['extendedPrice']
                     prices[stock].append(price)
                     if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
