@@ -17,7 +17,6 @@ api_key = "9PXXWXMCD4EE6Z52"
 SMTP_SERVER = 'relay.apple.com'
 phone_number = "4086432331"
 
-
 def get_outliers(data, m=2):
     u = np.mean(data)
     s = np.std(data)
@@ -63,6 +62,10 @@ def getOptions():
                         "--api",
                         dest='api',
                         default="iextrading_api")
+    parser.add_argument("-v",
+                        "--sms_server",
+                        dest='sms_server',
+                        default='http://perfreporting.apple.com:9090/text')
     options = parser.parse_args()
     return options
 
@@ -97,6 +100,7 @@ def alphavantage_main(options):
     stock_list = options.stock_list
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
+    sms_server = options.sms_server
     #start_time = "2018-11-20 06:40:00"
     while True:
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
@@ -126,19 +130,19 @@ def alphavantage_main(options):
                         # for " + stock + "Current volume is: %s; time is: %s"
                         # % (int(latest_data['5. volume']),
                         # sorted(stock_data_min.iterkeys(), reverse=True)[0])
-                        requests.post('http://perfreporting.apple.com:9090/text', {
+                        requests.post(sms_server, {
                             'number': phone_number,
                             'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         })
                         print "Sending message to %s with high volumn notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         if is_low_price(float(latest_data["4. close"]), all_values):
-                            requests.post('http://perfreporting.apple.com:9090/text', {
+                            requests.post(sms_server, {
                                 'number': phone_number,
                                 'message': "Low price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             })
                             print "Sending message to %s with low price notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         elif is_high_price(float(latest_data["4. close"]), all_values):
-                            requests.post('http://perfreporting.apple.com:9090/text', {
+                            requests.post(sms_server, {
                                 'number': phone_number,
                                 'message': "High price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             })
@@ -157,6 +161,7 @@ def iextrading_main(options):
     stock_list = options.stock_list
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
+    sms_server = options.sms_server
     #start_time = "2018-11-20 06:40:00"
     while True:
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
@@ -188,7 +193,7 @@ def iextrading_main(options):
                         # for " + stock + "Current volume is: %s; time is: %s"
                         # % (int(latest_data['5. volume']),
                         # sorted(stock_data_min.iterkeys(), reverse=True)[0])
-                        requests.post('http://perfreporting.apple.com:9090/text', {
+                        requests.post(sms_server, {
                             'number': phone_number,
                             'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['marketVolume']), latest_data['minute'])
                         })
@@ -206,6 +211,7 @@ def iextrading_quote_main(options):
     stock_list = options.stock_list
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
+    sms_server = options.sms_server
     #start_time = "2018-11-20 06:40:00"
     from collections import defaultdict
     total_volumes = defaultdict(list)
@@ -262,7 +268,7 @@ def iextrading_quote_main(options):
                             high_volume_message = "High volumn notification for %s. Current volume is: %s"\
                                 "; time is: %s" % (
                                     stock, volume, extended_price_time)
-                            requests.post('http://perfreporting.apple.com:9090/text', {
+                            requests.post(sms_server, {
                                 'number': phone_number,
                                 'message': high_volume_message
                             })
@@ -270,7 +276,7 @@ def iextrading_quote_main(options):
                             if is_low_price(price, prices[stock]):
                                 low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
-                                requests.post('http://perfreporting.apple.com:9090/text', {
+                                requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': low_price_message
                                 })
@@ -278,7 +284,7 @@ def iextrading_quote_main(options):
                             elif is_high_price(price, prices[stock]):
                                 high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
-                                requests.post('http://perfreporting.apple.com:9090/text', {
+                                requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': high_price_message
                                 })
