@@ -250,12 +250,12 @@ def iextrading_quote_main(options):
                             outliers = get_outliers_iqr(volume_to_check)
                         else:
                             outliers = []
-                        print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        print "outliers: %s" % outliers
-                        print "latest_data: %s" % stock_data_min
-                        print "volumes: %s" % volumes
-                        print "total_volumes: %s" % total_volumes
-                        print "prices: %s" % prices
+                        #print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        #print "outliers: %s" % outliers
+                        #print "latest_data: %s" % stock_data_min
+                        #print "volumes: %s" % volumes
+                        #print "total_volumes: %s" % total_volumes
+                        #print "prices: %s" % prices
                         if volumes[stock][-1] in outliers:
                             #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
                             # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
