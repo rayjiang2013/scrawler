@@ -246,7 +246,10 @@ def iextrading_quote_main(options):
                         else:
                             volume_to_check = volumes[stock][-100:]
                         #outliers = get_outliers(all_volume)
-                        outliers = get_outliers_iqr(volume_to_check)
+                        if volume_to_check:
+                            outliers = get_outliers_iqr(volume_to_check)
+                        else:
+                            outliers = []
                         print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         print "outliers: %s" % outliers
                         print "latest_data: %s" % stock_data_min
