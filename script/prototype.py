@@ -256,7 +256,7 @@ def iextrading_quote_main(options):
                         #print "volumes: %s" % volumes
                         #print "total_volumes: %s" % total_volumes
                         #print "prices: %s" % prices
-                        if volumes[stock][-1] in outliers:
+                        if volume in outliers and volume > 0:
                             #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
                             # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
                             #send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
