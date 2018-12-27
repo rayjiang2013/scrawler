@@ -1,4 +1,5 @@
 import argparse
+import csv
 import json
 import requests
 import time
@@ -16,6 +17,8 @@ iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/1d"
 api_key = "9PXXWXMCD4EE6Z52"
 SMTP_SERVER = 'relay.apple.com'
 phone_number = "4086432331"
+CSV_FILE = 'prototype.csv'
+
 
 def get_outliers(data, m=2):
     u = np.mean(data)
@@ -174,11 +177,11 @@ def iextrading_main(options):
                                   for v in stock_data_min]
                     # volume_exclude_zero = [v for v in all_volume[] if v!= 0]
                     if len(all_volume) <= 100:
-                        volume_to_check = all_volume
+                        volumes_to_check = all_volume
                     else:
-                        volume_to_check = all_volume[-100:]
+                        volumes_to_check = all_volume[-100:]
                     #outliers = get_outliers(all_volume)
-                    outliers = get_outliers_iqr(volume_to_check)
+                    outliers = get_outliers_iqr(volumes_to_check)
                     print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     print "outliers: %s" % outliers
                     latest_data = sorted(
@@ -207,6 +210,36 @@ def iextrading_main(options):
             break
 
 
+def append_row_to_csv(row, csv_file):
+    with open(csv_file, 'a') as f_out:
+        writer = csv.writer(f_out)
+        writer.writerow(row)
+
+
+def read_rows_of_stock_from_csv(stock, csv_file):
+    rows = []
+    with open(csv_file, 'r') as f_in:
+        reader = csv.reader(f_in)
+        for row in reader:
+            if row[1] == stock:
+                rows.append(row)
+    return rows
+
+
+def collect_traceback():
+    import traceback
+    import uuid
+    import os
+    my_uuid = uuid.uuid1()
+    file_path = '/tmp/{}.exception'.format(my_uuid)
+    with open(file_path, 'w') as file:
+        traceback.print_exc(file=file)
+    with open(file_path, 'r') as file:
+        traceback_output = file.read()
+    os.remove(file_path)
+    return traceback_output
+
+
 def iextrading_quote_main(options):
     stock_list = options.stock_list
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
@@ -218,7 +251,8 @@ def iextrading_quote_main(options):
     volumes = defaultdict(list)
     prices = defaultdict(list)
     while True:
-        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time.split()[0] + ' 05:00:00':
+        time_stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if time_stamp > end_time.split()[0] + ' 05:00:00':
             for stock in stock_list:
                 time.sleep(1)
                 try:
@@ -234,28 +268,42 @@ def iextrading_quote_main(options):
                     else:
                         volume = 0
                     # only check outlier from non zero volumes
-                    if volume > 0:
-                        volumes[stock].append(volume)
+
                     price = stock_data_min['extendedPrice']
                     prices[stock].append(price)
-                    if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
+                    if volume > 0:
+                        volumes[stock].append(volume)
+                        csv_row = (time_stamp, stock, volume,
+                                   total_volume, price)
+                        append_row_to_csv(csv_row, CSV_FILE)
+
+                    if time_stamp > start_time:
                         # volume_exclude_zero = [v for v in all_volume[] if v!=
                         # 0]
+                        rows = read_rows_of_stock_from_csv(stock, CSV_FILE)
                         if len(volumes[stock]) <= 100:
-                            volume_to_check = volumes[stock]
+                            if len(rows) > len(volumes[stock]) and len(rows) > 100:
+                                volumes_to_check = [
+                                    row[2] for row in rows if float(row[2]) > 0][-100:]
+                            elif len(rows) > len(volumes[stock]) and len(rows) <= 100:
+                                volumes_to_check = [row[2]
+                                                    for row in rows if float(row[2]) > 0]
+                            else:
+                                volumes_to_check = volumes[stock]
                         else:
-                            volume_to_check = volumes[stock][-100:]
+                            volumes_to_check = volumes[stock][-100:]
                         #outliers = get_outliers(all_volume)
-                        if volume_to_check:
-                            outliers = get_outliers_iqr(volume_to_check)
+                        if volumes_to_check:
+                            outliers = get_outliers_iqr(volumes_to_check)
                         else:
                             outliers = []
-                        #print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        #print "outliers: %s" % outliers
-                        #print "latest_data: %s" % stock_data_min
-                        #print "volumes: %s" % volumes
-                        #print "total_volumes: %s" % total_volumes
-                        #print "prices: %s" % prices
+                        # print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        # print "outliers: %s" % outliers
+                        # print "latest_data: %s" % stock_data_min
+                        # print "volumes: %s" % volumes
+                        # print "total_volumes: %s" % total_volumes
+                        # print "prices: %s" % prices
+
                         if volume in outliers and volume > 0:
                             #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
                             # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
@@ -271,7 +319,8 @@ def iextrading_quote_main(options):
                             high_volume_message = "High volumn notification for %s. Current volume is: %s"\
                                 "; time is: %s" % (
                                     stock, volume, extended_price_time)
-                            send_email("l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com", high_volume_message, high_volume_message)
+                            send_email("l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com",
+                                       high_volume_message, high_volume_message)
                             requests.post(sms_server, {
                                 'number': phone_number,
                                 'message': high_volume_message
@@ -280,7 +329,8 @@ def iextrading_quote_main(options):
                             if is_low_price(price, prices[stock]):
                                 low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
-                                send_email("l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com", low_price_message, low_price_message)
+                                send_email(
+                                    "l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com", low_price_message, low_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': low_price_message
@@ -289,7 +339,8 @@ def iextrading_quote_main(options):
                             elif is_high_price(price, prices[stock]):
                                 high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
-                                send_email("l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com", high_price_message, high_price_message)
+                                send_email(
+                                    "l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com", high_price_message, high_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': high_price_message
@@ -299,6 +350,10 @@ def iextrading_quote_main(options):
                         # print latest_data, second_latest_data
                 except Exception, e:
                     print e
+                    exception_info = "{}:{}".format(
+                        e.__class__.__name__, e.message)
+                    exception_info += collect_traceback()
+                    print exception_info
                     print "Exception at " + iextrading_api % (stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             time.sleep(59)
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
