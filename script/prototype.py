@@ -284,10 +284,10 @@ def iextrading_quote_main(options):
                         if len(volumes[stock]) <= 100:
                             if len(rows) > len(volumes[stock]) and len(rows) > 100:
                                 volumes_to_check = [
-                                    row[2] for row in rows if float(row[2]) > 0][-100:]
+                                    int(row[2]) for row in rows if int(row[2]) > 0][-100:]
                             elif len(rows) > len(volumes[stock]) and len(rows) <= 100:
-                                volumes_to_check = [row[2]
-                                                    for row in rows if float(row[2]) > 0]
+                                volumes_to_check = [int(row[2])
+                                                    for row in rows if int(row[2]) > 0]
                             else:
                                 volumes_to_check = volumes[stock]
                         else:
