@@ -319,7 +319,7 @@ def iextrading_quote_main(options):
                             high_volume_message = "High volumn notification for %s. Current volume is: %s"\
                                 "; time is: %s" % (
                                     stock, volume, extended_price_time)
-                            send_email("l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com",
+                            send_email("ray.q2005@gmail.com", "ray.q2005@gmail.com",
                                        high_volume_message, high_volume_message)
                             requests.post(sms_server, {
                                 'number': phone_number,
@@ -330,7 +330,7 @@ def iextrading_quote_main(options):
                                 low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 send_email(
-                                    "l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com", low_price_message, low_price_message)
+                                    "ray.q2005@gmail.com", "ray.q2005@gmail.com", low_price_message, low_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': low_price_message
@@ -340,7 +340,7 @@ def iextrading_quote_main(options):
                                 high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 send_email(
-                                    "l_jiang_apple@icloud.com", "l_jiang_apple@icloud.com", high_price_message, high_price_message)
+                                    "ray.q2005@gmail.com", "ray.q2005@gmail.com", high_price_message, high_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': high_price_message
