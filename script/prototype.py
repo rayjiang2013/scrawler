@@ -11,14 +11,15 @@ from datetime import datetime
 stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT",
               "JPM", "NTES", "PG", "SCHW", "SOGO", "TRVG", "WB"]
 alphavantage_api = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&interval=1min&apikey=%s&symbol=%s"
-iextrading_quote_api = "https://api.iextrading.com/1.0/stock/%s/quote"
+# iextrading_quote_api = "https://api.iextrading.com/1.0/stock/%s/quote"
+iextrading_quote_api = "https://cloud.iexapis.com/stable/stock/%s/quote?token=%s"
 iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/1d"
-#iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/date/20181123"
+# iextrading_api = "https://api.iextrading.com/1.0/stock/%s/chart/date/20181123"
 api_key = "9PXXWXMCD4EE6Z52"
 SMTP_SERVER = 'relay.apple.com'
 phone_number = "4086432331"
 CSV_FILE = 'prototype.csv'
-
+default_email_address = 'l_jiang_apple@icloud.com'
 
 def get_outliers(data, m=2):
     u = np.mean(data)
@@ -65,10 +66,17 @@ def getOptions():
                         "--api",
                         dest='api',
                         default="iextrading_api")
+    parser.add_argument("-t",
+                        "--iextrading_token",
+                        dest='iextrading_token')
     parser.add_argument("-v",
                         "--sms_server",
                         dest='sms_server',
                         default='http://perfreporting.apple.com:9090/text')
+    parser.add_argument("-d",
+                        "--email_address",
+                        dest='email_address',
+                        default=default_email_address)
     options = parser.parse_args()
     return options
 
@@ -245,6 +253,8 @@ def iextrading_quote_main(options):
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
     sms_server = options.sms_server
+    token = options.iextrading_token
+    email_address = options.email_address
     #start_time = "2018-11-20 06:40:00"
     from collections import defaultdict
     total_volumes = defaultdict(list)
@@ -252,12 +262,12 @@ def iextrading_quote_main(options):
     prices = defaultdict(list)
     while True:
         time_stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        if time_stamp > end_time.split()[0] + ' 05:00:00':
+        if time_stamp > end_time.split()[0] + ' 02:00:00':
             for stock in stock_list:
                 time.sleep(1)
                 try:
                     stock_resp_min = requests.get(
-                        iextrading_quote_api % (stock))
+                        iextrading_quote_api % (stock, token))
                     stock_data_min = json.loads(stock_resp_min.content)
                     total_volume = int(stock_data_min.get('latestVolume', 0)
                                        ) if stock_data_min.get('latestVolume') is not None else 0
@@ -268,8 +278,10 @@ def iextrading_quote_main(options):
                     else:
                         volume = 0
                     # only check outlier from non zero volumes
-
-                    price = stock_data_min['extendedPrice']
+                    if time_stamp < end_time.split()[0] + ' 06:30:00' or time_stamp > end_time.split()[0] + ' 13:00:00':
+                        price = stock_data_min['extendedPrice']
+                    else:
+                        price = stock_data_min['latestPrice']
                     prices[stock].append(price)
                     if volume > 0:
                         volumes[stock].append(volume)
@@ -314,12 +326,16 @@ def iextrading_quote_main(options):
                             # % (int(latest_data['5. volume']),
                             # sorted(stock_data_min.iterkeys(),
                             # reverse=True)[0])
-                            extended_price_time = datetime.fromtimestamp(
-                                stock_data_min["extendedPriceTime"] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                            if time_stamp < end_time.split()[0] + ' 06:30:00' or time_stamp > end_time.split()[0] + ' 13:00:00':
+                                extended_price_time = datetime.fromtimestamp(
+                                    stock_data_min["extendedPriceTime"] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                            else:
+                                extended_price_time = datetime.fromtimestamp(
+                                    stock_data_min["latestUpdate"] / 1000).strftime('%Y-%m-%d %H:%M:%S')
                             high_volume_message = "High volumn notification for %s. Current volume is: %s"\
                                 "; time is: %s" % (
                                     stock, volume, extended_price_time)
-                            send_email("ray.q2005@gmail.com", "ray.q2005@gmail.com",
+                            send_email(email_address, email_address,
                                        high_volume_message, high_volume_message)
                             requests.post(sms_server, {
                                 'number': phone_number,
@@ -330,7 +346,7 @@ def iextrading_quote_main(options):
                                 low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 send_email(
-                                    "ray.q2005@gmail.com", "ray.q2005@gmail.com", low_price_message, low_price_message)
+                                    email_address, email_address, low_price_message, low_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': low_price_message
@@ -340,7 +356,7 @@ def iextrading_quote_main(options):
                                 high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 send_email(
-                                    "ray.q2005@gmail.com", "ray.q2005@gmail.com", high_price_message, high_price_message)
+                                    email_address, email_address, high_price_message, high_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': high_price_message
@@ -354,11 +370,11 @@ def iextrading_quote_main(options):
                         e.__class__.__name__, e.message)
                     exception_info += collect_traceback()
                     print exception_info
-                    print "Exception at " + iextrading_api % (stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    print "Exception at " + iextrading_quote_api % (stock, token) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             time.sleep(59)
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
             break
-        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time.split()[0] + ' 14:00:00':
+        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time.split()[0] + ' 17:00:00':
             break
 
 
