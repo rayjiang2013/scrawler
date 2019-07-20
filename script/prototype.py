@@ -112,6 +112,8 @@ def alphavantage_main(options):
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
     sms_server = options.sms_server
+    email_address = options.email_address
+
     #start_time = "2018-11-20 06:40:00"
     while True:
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > start_time:
@@ -141,21 +143,35 @@ def alphavantage_main(options):
                         # for " + stock + "Current volume is: %s; time is: %s"
                         # % (int(latest_data['5. volume']),
                         # sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        high_volume_message = "High volumn notification for %s. Current volume is: %s"\
+                            "; time is: %s" % (
+                                stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        send_email(email_address, email_address,
+                                   high_volume_message, high_volume_message)
+                        print "Sending email to %s with high volumn notification for " % email_address + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         requests.post(sms_server, {
                             'number': phone_number,
-                            'message': "High volumn notification for %s. Current volume is: %s; time is: %s" % (stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            'message': high_volume_message
                         })
                         print "Sending message to %s with high volumn notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         if is_low_price(float(latest_data["4. close"]), all_values):
+                            low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            send_email(email_address, email_address,
+                                       low_price_message, low_price_message)
+                            print "Sending email to %s with low price notification for " % email_address + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             requests.post(sms_server, {
                                 'number': phone_number,
-                                'message': "Low price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                                'message': low_price_message
                             })
                             print "Sending message to %s with low price notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         elif is_high_price(float(latest_data["4. close"]), all_values):
+                            high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            send_email(email_address, email_address,
+                                       high_price_message, high_price_message)
+                            print "Sending email to %s with high price notification for " % email_address + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             requests.post(sms_server, {
                                 'number': phone_number,
-                                'message': "High price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                                'message': high_price_message
                             })
                             print "Sending message to %s with high price notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
 
