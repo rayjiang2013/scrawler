@@ -73,9 +73,13 @@ def getOptions():
                         "--sms_server",
                         dest='sms_server',
                         default='http://perfreporting.apple.com:9090/text')
+    parser.add_argument("-f",
+                        "--from_email_address",
+                        dest='from_email_address',
+                        default=default_email_address)
     parser.add_argument("-d",
-                        "--email_address",
-                        dest='email_address',
+                        "--to_email_address",
+                        dest='to_email_address',
                         default=default_email_address)
     options = parser.parse_args()
     return options
@@ -112,7 +116,8 @@ def alphavantage_main(options):
     start_time = options.start_time  # for example, 2018-02-07 06:30:00
     end_time = options.end_time
     sms_server = options.sms_server
-    email_address = options.email_address
+    to_email_address = options.to_email_address
+    from_email_address = options.from_email_address
 
     #start_time = "2018-11-20 06:40:00"
     while True:
@@ -146,9 +151,9 @@ def alphavantage_main(options):
                         high_volume_message = "High volumn notification for %s. Current volume is: %s"\
                             "; time is: %s" % (
                                 stock, int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
-                        send_email(email_address, email_address,
+                        send_email(from_email_address, to_email_address,
                                    high_volume_message, high_volume_message)
-                        print "Sending email to %s with high volumn notification for " % email_address + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                        print "Sending email to %s with high volumn notification for " % to_email_address + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         requests.post(sms_server, {
                             'number': phone_number,
                             'message': high_volume_message
@@ -156,9 +161,9 @@ def alphavantage_main(options):
                         print "Sending message to %s with high volumn notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         if is_low_price(float(latest_data["4. close"]), all_values):
                             low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
-                            send_email(email_address, email_address,
+                            send_email(from_email_address, to_email_address,
                                        low_price_message, low_price_message)
-                            print "Sending email to %s with low price notification for " % email_address + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            print "Sending email to %s with low price notification for " % to_email_address + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             requests.post(sms_server, {
                                 'number': phone_number,
                                 'message': low_price_message
@@ -166,9 +171,9 @@ def alphavantage_main(options):
                             print "Sending message to %s with low price notification for " % phone_number + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                         elif is_high_price(float(latest_data["4. close"]), all_values):
                             high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (stock, latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
-                            send_email(email_address, email_address,
+                            send_email(from_email_address, to_email_address,
                                        high_price_message, high_price_message)
-                            print "Sending email to %s with high price notification for " % email_address + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
+                            print "Sending email to %s with high price notification for " % to_email_address + stock + "Current volume is: %s; time is: %s" % (latest_data['4. close'], sorted(stock_data_min.iterkeys(), reverse=True)[0])
                             requests.post(sms_server, {
                                 'number': phone_number,
                                 'message': high_price_message
@@ -270,7 +275,8 @@ def iextrading_quote_main(options):
     end_time = options.end_time
     sms_server = options.sms_server
     token = options.iextrading_token
-    email_address = options.email_address
+    to_email_address = options.to_email_address
+    from_email_address = options.from_email_address
     #start_time = "2018-11-20 06:40:00"
     from collections import defaultdict
     total_volumes = defaultdict(list)
@@ -351,7 +357,7 @@ def iextrading_quote_main(options):
                             high_volume_message = "High volumn notification for %s. Current volume is: %s"\
                                 "; time is: %s" % (
                                     stock, volume, extended_price_time)
-                            send_email(email_address, email_address,
+                            send_email(from_email_address, to_email_address,
                                        high_volume_message, high_volume_message)
                             requests.post(sms_server, {
                                 'number': phone_number,
@@ -362,7 +368,7 @@ def iextrading_quote_main(options):
                                 low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 send_email(
-                                    email_address, email_address, low_price_message, low_price_message)
+                                    from_email_address, to_email_address, low_price_message, low_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': low_price_message
@@ -372,7 +378,7 @@ def iextrading_quote_main(options):
                                 high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
                                     stock, price, extended_price_time)
                                 send_email(
-                                    email_address, email_address, high_price_message, high_price_message)
+                                    from_email_address, to_email_address, high_price_message, high_price_message)
                                 requests.post(sms_server, {
                                     'number': phone_number,
                                     'message': high_price_message
