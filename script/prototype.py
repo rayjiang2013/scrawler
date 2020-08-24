@@ -7,6 +7,7 @@ import smtplib
 from email.mime.text import MIMEText
 import numpy as np
 from datetime import datetime
+from yahooquery import Ticker
 
 stock_list = ["AAPL", "AVGO", "BA", "LITE", "LMT",
               "JPM", "NTES", "PG", "SCHW", "SOGO", "TRVG", "WB"]
@@ -186,6 +187,128 @@ def alphavantage_main(options):
                     print "Exception at " + alphavantage_api % (api_key, stock) + " at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             time.sleep(59)
         if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
+            break
+
+
+def yahoo_finance_main(options):
+    # evaluated top repos here:
+    # https://github.com/search?l=Python&o=desc&q=yahoo+finance&s=stars&type=Repositories
+    # eventially chosed https://github.com/dpguthrie/yahooquery because it is very active
+    stock_list = options.stock_list
+    start_time = options.start_time  # for example, 2018-02-07 06:30:00
+    end_time = options.end_time
+    sms_server = options.sms_server
+    to_email_address = options.to_email_address
+    from_email_address = options.from_email_address
+    #start_time = "2018-11-20 06:40:00"
+    from collections import defaultdict
+    total_volumes = defaultdict(list)
+    volumes = defaultdict(list)
+    prices = defaultdict(list)
+    while True:
+        time_stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if time_stamp > end_time.split()[0] + ' 02:00:00':
+            for stock in stock_list:
+                time.sleep(1)
+                try:
+                    stock_data_min = Ticker(stock.lower()).summary_detail[stock.lower()]
+                    total_volume = int(stock_data_min.get('volume', 0)) if stock_data_min.get('volume') is not None else 0
+                    total_volumes[stock].append(total_volume)
+                    if len(total_volumes[stock]) > 1:
+                        volume = total_volumes[stock][-1] - \
+                            total_volumes[stock][-2]
+                    else:
+                        volume = 0
+                    # only check outlier from non zero volumes
+                    price = stock_data_min['ask']
+                    prices[stock].append(price)
+                    if volume > 0:
+                        volumes[stock].append(volume)
+                        csv_row = (time_stamp, stock, volume,
+                                   total_volume, price)
+                        append_row_to_csv(csv_row, CSV_FILE)
+
+                    if time_stamp > start_time:
+                        # volume_exclude_zero = [v for v in all_volume[] if v!=
+                        # 0]
+                        rows = read_rows_of_stock_from_csv(stock, CSV_FILE)
+                        if len(volumes[stock]) <= 100:
+                            if len(rows) > len(volumes[stock]) and len(rows) > 100:
+                                volumes_to_check = [
+                                    int(row[2]) for row in rows if int(row[2]) > 0][-100:]
+                            elif len(rows) > len(volumes[stock]) and len(rows) <= 100:
+                                volumes_to_check = [int(row[2])
+                                                    for row in rows if int(row[2]) > 0]
+                            else:
+                                volumes_to_check = volumes[stock]
+                        else:
+                            volumes_to_check = volumes[stock][-100:]
+                        #outliers = get_outliers(all_volume)
+                        if volumes_to_check:
+                            outliers = get_outliers_iqr(volumes_to_check)
+                        else:
+                            outliers = []
+                        # print "time: %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        # print "outliers: %s" % outliers
+                        # print "latest_data: %s" % stock_data_min
+                        # print "volumes: %s" % volumes
+                        # print "total_volumes: %s" % total_volumes
+                        # print "prices: %s" % prices
+
+                        if volume in outliers and volume > 0:
+                            #second_latest_data = stock_data_min[sorted(stock_data_min.iterkeys(), reverse=True)[1]]
+                            # if latest_data/second_latest_data > 2 or latest_data/second_latest_data < 1/2:
+                            #send_email("l_jiang@apple.com", "iamabigstone@gmail.com", "high volumn notification for %s" % stock, "Current volume is: %s; time is: %s" % (int(latest_data['5. volume']), sorted(stock_data_min.iterkeys(), reverse=True)[0]))
+                            # print "Sending email from l_jiang@apple.com to
+                            # iamabigstone@gmail.com with high volumn notification
+                            # for " + stock + "Current volume is: %s; time is: %s"
+                            # % (int(latest_data['5. volume']),
+                            # sorted(stock_data_min.iterkeys(),
+                            # reverse=True)[0])
+                            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            high_volume_message = "High volumn notification for %s. Current volume is: %s"\
+                                "; time is: %s" % (
+                                    stock, volume, current_time)
+                            send_email(from_email_address, to_email_address,
+                                       high_volume_message, high_volume_message)
+                            requests.post(sms_server, {
+                                'number': phone_number,
+                                'message': high_volume_message
+                            })
+                            print high_volume_message
+                            if is_low_price(price, prices[stock]):
+                                low_price_message = "Low price notification for %s. Current price is: %s; time is: %s" % (
+                                    stock, price, current_time)
+                                send_email(
+                                    from_email_address, to_email_address, low_price_message, low_price_message)
+                                requests.post(sms_server, {
+                                    'number': phone_number,
+                                    'message': low_price_message
+                                })
+                                print low_price_message
+                            elif is_high_price(price, prices[stock]):
+                                high_price_message = "High price notification for %s. Current price is: %s; time is: %s" % (
+                                    stock, price, current_time)
+                                send_email(
+                                    from_email_address, to_email_address, high_price_message, high_price_message)
+                                requests.post(sms_server, {
+                                    'number': phone_number,
+                                    'message': high_price_message
+                                })
+                                print high_price_message
+
+                        # print latest_data, second_latest_data
+                except Exception, e:
+                    print e
+                    exception_info = "{}:{}".format(
+                        e.__class__.__name__, e.message)
+                    exception_info += collect_traceback()
+                    print exception_info
+                    print "Exception at %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            time.sleep(59)
+        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time:
+            break
+        if datetime.now().strftime('%Y-%m-%d %H:%M:%S') > end_time.split()[0] + ' 17:00:00':
             break
 
 
@@ -409,5 +532,7 @@ if __name__ == '__main__':
         iextrading_main(options)
     elif api == "iextrading_quote_api":
         iextrading_quote_main(options)
+    elif api == "yahoo_finance":
+        yahoo_finance_main(options)
     else:
         print "unrecognized api!! please check your -a option"
